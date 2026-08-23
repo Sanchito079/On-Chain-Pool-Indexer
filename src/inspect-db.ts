@@ -12,6 +12,8 @@ try {
   console.log(`Meteora DAMM v2 pools: ${database.meteoraCount()}`);
   console.log(`Meteora DLMM pools: ${database.dlmmCount()}`);
   console.log(`Orca Whirlpool pools: ${database.orcaWhirlpoolCount()}`);
+  console.log(`PancakeSwap V2 BSC pools: ${database.pancakeSwapV2Pools().length}`);
+  console.table(database.pancakeSwapV2Pools().slice(0, 20));
   console.table(database.meteoraPools().map(({ address, poolType, tokenAMint, tokenASymbol, tokenADecimals, tokenBMint, tokenBSymbol, tokenBDecimals, tokenAVault, tokenBVault, tokenAAmount, tokenBAmount, poolMode, updatedSlot }) => ({ address, poolType, tokenAMint, tokenASymbol, tokenADecimals, tokenBMint, tokenBSymbol, tokenBDecimals, tokenAVault, tokenBVault, tokenAAmount, tokenBAmount, poolMode, updatedSlot })));
   console.table(database.latestPrices());
 } finally {

@@ -89,6 +89,15 @@ export class PoolDatabase {
     );
     CREATE INDEX IF NOT EXISTS meteora_dlmm_mint_x_idx ON meteora_dlmm_pools(token_x_mint);
     CREATE INDEX IF NOT EXISTS meteora_dlmm_mint_y_idx ON meteora_dlmm_pools(token_y_mint);`);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS bsc_pancakeswap_v2_pools (
+      address TEXT PRIMARY KEY, pool_type TEXT NOT NULL, chain TEXT NOT NULL, factory TEXT NOT NULL,
+      token0 TEXT NOT NULL, token0_symbol TEXT, token0_decimals INTEGER NOT NULL,
+      token1 TEXT NOT NULL, token1_symbol TEXT, token1_decimals INTEGER NOT NULL,
+      pair_index TEXT NOT NULL, transaction_hash TEXT NOT NULL, block_number INTEGER NOT NULL,
+      discovered_at TEXT NOT NULL, indexed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v2_token0_idx ON bsc_pancakeswap_v2_pools(token0);
+    CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v2_token1_idx ON bsc_pancakeswap_v2_pools(token1);`);
     for (const column of ['base_logo_url', 'quote_logo_url']) {
       const exists = this.db.prepare('SELECT 1 FROM pragma_table_info(\'pools\') WHERE name = ?').get(column);
       if (!exists) this.db.exec(`ALTER TABLE pools ADD COLUMN ${column} TEXT`);
@@ -129,6 +138,23 @@ export class PoolDatabase {
 
   count(): number {
     return (this.db.prepare('SELECT COUNT(*) AS count FROM pools').get() as { count: number }).count;
+  }
+
+  upsertPancakeSwapV2Pool(pool: import('./evm/bsc/pancakeswap-v2-types.js').PancakeSwapV2PoolRecord): void {
+    this.db.prepare(`INSERT INTO bsc_pancakeswap_v2_pools (address, pool_type, chain, factory, token0, token0_symbol, token0_decimals,
+      token1, token1_symbol, token1_decimals, pair_index, transaction_hash, block_number, discovered_at)
+      VALUES (@address, @poolType, @chain, @factory, @token0, @token0Symbol, @token0Decimals, @token1, @token1Symbol,
+      @token1Decimals, @pairIndex, @transactionHash, @blockNumber, @discoveredAt)
+      ON CONFLICT(address) DO UPDATE SET token0_symbol=excluded.token0_symbol, token0_decimals=excluded.token0_decimals,
+      token1_symbol=excluded.token1_symbol, token1_decimals=excluded.token1_decimals, indexed_at=CURRENT_TIMESTAMP`).run(pool);
+    this.postgres?.writePancakeSwapV2(pool);
+  }
+
+  pancakeSwapV2Pools(): Array<import('./evm/bsc/pancakeswap-v2-types.js').PancakeSwapV2PoolRecord> {
+    return this.db.prepare(`SELECT address, pool_type AS poolType, chain, factory, token0, token0_symbol AS token0Symbol,
+      token0_decimals AS token0Decimals, token1, token1_symbol AS token1Symbol, token1_decimals AS token1Decimals,
+      pair_index AS pairIndex, transaction_hash AS transactionHash, block_number AS blockNumber, discovered_at AS discoveredAt
+      FROM bsc_pancakeswap_v2_pools ORDER BY indexed_at DESC`).all() as Array<import('./evm/bsc/pancakeswap-v2-types.js').PancakeSwapV2PoolRecord>;
   }
 
   upsertRaydiumPool(pool: import('./raydium-types.js').RaydiumClmmPoolRecord): void {
