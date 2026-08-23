@@ -163,6 +163,7 @@ export class PoolDatabase {
   }
 
   upsertPancakeSwapV2Price(price: import('./evm/bsc/pancakeswap-v2-price.js').PancakeSwapV2Price): void {
+    this.postgres?.writePancakeSwapV2Price(price);
     this.db.prepare(`INSERT INTO bsc_pancakeswap_v2_prices (pool_address, reserve0, reserve1, price, inverse_price, base_token, quote_token, updated_block, updated_at)
       VALUES (@poolAddress, @reserve0, @reserve1, @price, @inversePrice, @baseToken, @quoteToken, @updatedBlock, @updatedAt)
       ON CONFLICT(pool_address) DO UPDATE SET reserve0=excluded.reserve0, reserve1=excluded.reserve1, price=excluded.price,

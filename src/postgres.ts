@@ -38,6 +38,13 @@ export class PostgresWriter {
   writeDlmm(pool: MeteoraDlmmPoolRecord): void { this.enqueue('meteora_dlmm_pools', this.camelToSnake(pool)); }
   writeOrca(pool: OrcaWhirlpoolRecord): void { this.enqueue('orca_whirlpools', this.camelToSnake(pool)); }
   writePancakeSwapV2(pool: PancakeSwapV2PoolRecord): void { this.enqueue('bsc_pancakeswap_v2_pools', this.camelToSnake(pool)); }
+  writePancakeSwapV2Price(price: import('./evm/bsc/pancakeswap-v2-price.js').PancakeSwapV2Price): void {
+    this.enqueue('bsc_pancakeswap_v2_prices', {
+      pool_address: price.poolAddress, reserve0: price.reserve0.toString(), reserve1: price.reserve1.toString(),
+      price: price.price, inverse_price: price.inversePrice, base_token: price.baseToken, quote_token: price.quoteToken,
+      updated_block: price.updatedBlock, updated_at: price.updatedAt,
+    }, 'pool_address');
+  }
 
   writePrice(price: PoolPrice, timestamp = Date.now()): void {
     if (price.price === null) return;

@@ -35,7 +35,7 @@ WebSocket subscriptions and HTTP hydration are separate. `SOLANA_HTTP_RPC_URLS` 
 
 Set `TATUM_STREAMS=raydium`, `pumpswap`, `meteora`, `dlmm`, or `both` to run only the desired gRPC stream. Orca Whirlpool discovery and pricing run through the WebSocket transport and are stored separately in `orca_whirlpools`.
 
-PancakeSwap V2 BSC pool discovery uses the factory `PairCreated` event and is enabled in WebSocket mode by default. Configure `BSC_WS_RPC_URL`, `BSC_HTTP_RPC_URL`, and set `BSC_PANCAKESWAP_V2=false` to disable it. Pricing is intentionally not enabled in this slice. Discovered pairs are stored in `bsc_pancakeswap_v2_pools`.
+PancakeSwap V2 BSC pool discovery uses the factory `PairCreated` event and pair pricing uses `Sync` reserve events. Configure `BSC_WS_RPC_URL`, `BSC_HTTP_RPC_URL`, and set `BSC_PANCAKESWAP_V2=false` to disable it. Discovered pairs are stored in `bsc_pancakeswap_v2_pools` and prices in `bsc_pancakeswap_v2_prices`.
 
 ## Deploy to Fly.io
 
