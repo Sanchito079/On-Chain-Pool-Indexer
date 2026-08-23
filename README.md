@@ -60,6 +60,18 @@ Monitor the machine with `fly status`, `fly logs`, and `fly checks list`. The he
 
 The complete SQLite DDL is in `schema.sql`. The application also creates and migrates these tables automatically on startup. Do not use multiple Fly machines with this SQLite volume; move to Postgres before scaling horizontally.
 
+### PostgreSQL schema
+
+The PostgreSQL DDL is in `schema.postgres.sql`. Run it with `psql` using the direct Fly Postgres connection string when available:
+
+```powershell
+$env:DATABASE_URL = "paste-the-rotated-postgres-url-here"
+psql "$env:DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.postgres.sql
+Remove-Item Env:DATABASE_URL
+```
+
+The `pgbouncer` URL can be suitable for application traffic, but a direct connection URL is preferable for DDL and migrations. Do not commit the URL or put it in a command saved to shell history. The current indexer still uses SQLite through `better-sqlite3`; this PostgreSQL schema only prepares the database. The application must be migrated to a PostgreSQL adapter before `DATABASE_URL` will be used for runtime writes.
+
 Inspect stored pools from another PowerShell terminal with:
 
 ```powershell
