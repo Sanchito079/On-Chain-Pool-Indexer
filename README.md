@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Set `INDEXER_TRANSPORT=websocket` to use the Solana WebSocket path even when Tatum credentials are present. Set `INDEXER_TRANSPORT=grpc` to use Yellowstone. WebSocket mode subscribes to PumpSwap, Raydium, Meteora DAMM v2, and Meteora DLMM state where pools are already indexed. Configure `SOLANA_WS_RPC_URLS` as a comma-separated rotation list; the public Solana endpoint is appended automatically. On provider failure, the account stream reconnects on the next endpoint. PumpSwap pricing subscribes directly to vault accounts, so normal price updates do not require an HTTP transaction lookup.
+Set `INDEXER_TRANSPORT=bsc-pancakeswap-v2` to run only the BSC PancakeSwap V2 indexer; this mode does not initialize or connect to any Solana stream. Set `INDEXER_TRANSPORT=websocket` for the Solana WebSocket path or `INDEXER_TRANSPORT=grpc` for Yellowstone. WebSocket mode subscribes to PumpSwap, Raydium, Meteora DAMM v2, and Meteora DLMM state where pools are already indexed. Configure `SOLANA_WS_RPC_URLS` as a comma-separated rotation list; the public Solana endpoint is appended automatically. On provider failure, the account stream reconnects on the next endpoint. PumpSwap pricing subscribes directly to vault accounts, so normal price updates do not require an HTTP transaction lookup.
 
 The database is created at `data/pumpswap.db` by default. The listener only follows `CreatePool` logs, then fetches and enriches the new pool account. A successful start prints a subscription ID and `Waiting for new pools...`; it stays running quietly until a pool is created. Run `npm test` for deterministic decoder and persistence checks, or `npm run build` for a strict TypeScript build.
 

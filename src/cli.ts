@@ -70,7 +70,12 @@ try {
   await database.ready();
   const grpcEndpoint = process.env.SOLANA_GRPC_ENDPOINT;
   const grpcApiKey = process.env.TATUM_API_KEY;
-  if (transport === 'grpc' && grpcEndpoint && grpcApiKey) {
+  if (transport === 'bsc-pancakeswap-v2' || transport === 'pancakeswap-v2') {
+    const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
+    const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
+    console.log('Indexer transport: BSC PancakeSwap V2 only. Solana streams are disabled.');
+    await new PancakeSwapV2Indexer(database, bscHttpUrl, bscWsUrl).start();
+  } else if (transport === 'grpc' && grpcEndpoint && grpcApiKey) {
     const streams = new Set((process.env.TATUM_STREAMS ?? 'both').split(',').map((stream) => stream.trim().toLowerCase()));
     const prices = new PriceWebSocket(grpcEndpoint, handlePrice, httpUrls);
     const poolIndexer = new PumpSwapWebSocketIndexer(grpcEndpoint, database, (pool) => prices.addPool(pool), httpUrls);
@@ -110,10 +115,6 @@ try {
     if (!rpcUrl.startsWith('ws')) throw new Error('INDEXER_TRANSPORT=websocket requires SOLANA_WS_RPC_URL');
     console.log('Indexer transport: Solana WebSocket (all protocol live paths).');
     const prices = new PriceWebSocket(rpcUrl, handlePrice, httpUrls);
-    const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
-    const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
-    const bscIndexer = new PancakeSwapV2Indexer(database, bscHttpUrl, bscWsUrl);
-    if (process.env.BSC_PANCAKESWAP_V2 !== 'false') void bscIndexer.start().catch((error: unknown) => console.error('BSC PancakeSwap V2 indexer failed:', error));
     void prices.start(database.pools()).catch((error: unknown) => console.error('Price WebSocket failed:', error));
     const protocolSocket = new SolanaAccountWebSocket(solanaWsUrls());
     const chainlinkPrices = await loadChainlinkPrices();
