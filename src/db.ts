@@ -112,6 +112,11 @@ export class PoolDatabase {
     );
     CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v3_token0_idx ON bsc_pancakeswap_v3_pools(token0);
     CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v3_token1_idx ON bsc_pancakeswap_v3_pools(token1);`);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS bsc_pancakeswap_v3_prices (
+      pool_address TEXT PRIMARY KEY, price REAL, inverse_price REAL, base_token TEXT NOT NULL,
+      quote_token TEXT NOT NULL, sqrt_price_x96 TEXT NOT NULL, liquidity TEXT NOT NULL,
+      tick INTEGER NOT NULL, updated_block INTEGER NOT NULL, updated_at TEXT NOT NULL
+    );`);
     for (const column of ['base_logo_url', 'quote_logo_url']) {
       const exists = this.db.prepare('SELECT 1 FROM pragma_table_info(\'pools\') WHERE name = ?').get(column);
       if (!exists) this.db.exec(`ALTER TABLE pools ADD COLUMN ${column} TEXT`);
@@ -180,7 +185,6 @@ export class PoolDatabase {
       token1_symbol=excluded.token1_symbol, token1_decimals=excluded.token1_decimals, fee=excluded.fee,
       tick_spacing=excluded.tick_spacing, indexed_at=CURRENT_TIMESTAMP`).run(pool);
     this.postgres?.writePancakeSwapV3(pool);
-    this.postgres?.writePancakeSwapV3(pool);
   }
 
   pancakeSwapV3Pools(): Array<import('./evm/bsc/pancakeswap-v3-types.js').PancakeSwapV3PoolRecord> {
@@ -188,6 +192,15 @@ export class PoolDatabase {
       token0_decimals AS token0Decimals, token1, token1_symbol AS token1Symbol, token1_decimals AS token1Decimals,
       fee, tick_spacing AS tickSpacing, transaction_hash AS transactionHash, block_number AS blockNumber, discovered_at AS discoveredAt
       FROM bsc_pancakeswap_v3_pools ORDER BY indexed_at DESC`).all() as Array<import('./evm/bsc/pancakeswap-v3-types.js').PancakeSwapV3PoolRecord>;
+  }
+
+  upsertPancakeSwapV3Price(price: import('./evm/bsc/pancakeswap-v3-price.js').PancakeSwapV3Price): void {
+    this.db.prepare(`INSERT INTO bsc_pancakeswap_v3_prices (pool_address, price, inverse_price, base_token, quote_token, sqrt_price_x96, liquidity, tick, updated_block, updated_at)
+      VALUES (@poolAddress, @price, @inversePrice, @baseToken, @quoteToken, @sqrtPriceX96, @liquidity, @tick, @updatedBlock, @updatedAt)
+      ON CONFLICT(pool_address) DO UPDATE SET price=excluded.price, inverse_price=excluded.inverse_price,
+      base_token=excluded.base_token, quote_token=excluded.quote_token, sqrt_price_x96=excluded.sqrt_price_x96,
+      liquidity=excluded.liquidity, tick=excluded.tick, updated_block=excluded.updated_block, updated_at=excluded.updated_at`).run({ ...price, sqrtPriceX96: price.sqrtPriceX96.toString(), liquidity: price.liquidity.toString() });
+    this.postgres?.writePancakeSwapV3Price(price);
   }
 
   upsertPancakeSwapV2Price(price: import('./evm/bsc/pancakeswap-v2-price.js').PancakeSwapV2Price): void {

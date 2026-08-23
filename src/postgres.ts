@@ -40,6 +40,9 @@ export class PostgresWriter {
   writeOrca(pool: OrcaWhirlpoolRecord): void { this.enqueue('orca_whirlpools', this.camelToSnake(pool)); }
   writePancakeSwapV2(pool: PancakeSwapV2PoolRecord): void { this.enqueue('bsc_pancakeswap_v2_pools', this.camelToSnake(pool)); }
   writePancakeSwapV3(pool: PancakeSwapV3PoolRecord): void { this.enqueue('bsc_pancakeswap_v3_pools', this.camelToSnake(pool)); }
+  writePancakeSwapV3Price(price: import('./evm/bsc/pancakeswap-v3-price.js').PancakeSwapV3Price): void {
+    this.enqueue('bsc_pancakeswap_v3_prices', { pool_address: price.poolAddress, price: price.price, inverse_price: price.inversePrice, base_token: price.baseToken, quote_token: price.quoteToken, sqrt_price_x96: price.sqrtPriceX96.toString(), liquidity: price.liquidity.toString(), tick: price.tick, updated_block: price.updatedBlock, updated_at: price.updatedAt }, 'pool_address');
+  }
   writePancakeSwapV2Price(price: import('./evm/bsc/pancakeswap-v2-price.js').PancakeSwapV2Price): void {
     this.enqueue('bsc_pancakeswap_v2_prices', {
       pool_address: price.poolAddress, reserve0: price.reserve0.toString(), reserve1: price.reserve1.toString(),

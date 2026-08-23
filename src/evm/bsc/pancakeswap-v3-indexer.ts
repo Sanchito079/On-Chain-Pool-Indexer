@@ -3,6 +3,7 @@ import { PoolDatabase } from '../../db.js';
 import { ERC20_METADATA_ABI } from './pancakeswap-v2-constants.js';
 import { PANCAKESWAP_V3_FACTORY, PANCAKESWAP_V3_FACTORY_ABI } from './pancakeswap-v3-constants.js';
 import { PancakeSwapV3PoolRecord } from './pancakeswap-v3-types.js';
+import { calculatePancakeSwapV3Price, decodeSwapLog, swapTopic, type PancakeSwapV3Price } from './pancakeswap-v3-price.js';
 
 const poolCreatedTopic = id('PoolCreated(address,address,uint24,int24,address)');
 const factoryInterface = new Interface(PANCAKESWAP_V3_FACTORY_ABI);
@@ -20,12 +21,12 @@ export class PancakeSwapV3Indexer {
   private readonly provider: JsonRpcProvider;
   private readonly seen = new Set<string>();
 
-  constructor(private readonly database: PoolDatabase, httpUrl: string, private readonly wsUrl: string, private readonly factory = PANCAKESWAP_V3_FACTORY) {
+  constructor(private readonly database: PoolDatabase, httpUrl: string, private readonly wsUrl: string, private readonly factory = PANCAKESWAP_V3_FACTORY, private readonly onPrice?: (price: PancakeSwapV3Price) => void) {
     this.provider = new JsonRpcProvider(httpUrl, 56, { staticNetwork: true });
   }
 
   async start(): Promise<void> {
-    for (const pool of this.database.pancakeSwapV3Pools()) this.seen.add(pool.address.toLowerCase());
+    for (const pool of this.database.pancakeSwapV3Pools()) { this.seen.add(pool.address.toLowerCase()); this.subscribePool(pool); }
     while (true) {
       try {
         await this.connect();
@@ -64,7 +65,16 @@ export class PancakeSwapV3Indexer {
       discoveredAt: new Date().toISOString(),
     };
     this.database.upsertPancakeSwapV3Pool(pool);
+    this.subscribePool(pool);
     console.log(`Indexed new PancakeSwap V3 BSC pool ${address} (${pool.token0Symbol ?? pool.token0}/${pool.token1Symbol ?? pool.token1}, fee ${pool.fee}).`);
+  }
+
+  private subscribePool(pool: PancakeSwapV3PoolRecord): void {
+    if (!this.socket) return;
+    this.socket.on({ address: pool.address, topics: [swapTopic] }, (log) => {
+      const swap = decodeSwapLog(log);
+      if (swap) this.onPrice?.(calculatePancakeSwapV3Price(pool, swap.sqrtPriceX96, swap.liquidity, swap.tick, log.blockNumber));
+    });
   }
 
   private async metadata(address: string): Promise<{ symbol: string | null; decimals: number }> {
