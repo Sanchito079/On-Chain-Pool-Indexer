@@ -1,0 +1,25 @@
+export type MeteoraDlmmPoolRecord = {
+  address: string;
+  poolType: 'meteora_dlmm';
+  programId: string;
+  network: string;
+  creator: string;
+  tokenXMint: string;
+  tokenXSymbol: string | null;
+  tokenXDecimals: number;
+  tokenXTotalSupplyRaw: string;
+  tokenXLogoUrl: string | null;
+  tokenYMint: string;
+  tokenYSymbol: string | null;
+  tokenYDecimals: number;
+  tokenYTotalSupplyRaw: string;
+  tokenYLogoUrl: string | null;
+  reserveX: string;
+  reserveY: string;
+  oracle: string;
+  activeId: number;
+  binStep: number;
+  activationPoint: string;
+  updatedSlot: number;
+  discoveredAt: string;
+};

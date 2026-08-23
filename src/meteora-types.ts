@@ -1,0 +1,26 @@
+export type MeteoraDammV2PoolRecord = {
+  address: string;
+  poolType: 'meteora_damm_v2';
+  programId: string;
+  network: string;
+  creator: string;
+  tokenAMint: string;
+  tokenASymbol: string | null;
+  tokenADecimals: number;
+  tokenATotalSupplyRaw: string;
+  tokenALogoUrl: string | null;
+  tokenBMint: string;
+  tokenBSymbol: string | null;
+  tokenBDecimals: number;
+  tokenBTotalSupplyRaw: string;
+  tokenBLogoUrl: string | null;
+  tokenAVault: string;
+  tokenBVault: string;
+  tokenAAmount: string;
+  tokenBAmount: string;
+  sqrtPrice: string;
+  activationPoint: string;
+  poolMode: number;
+  updatedSlot: number;
+  discoveredAt: string;
+};

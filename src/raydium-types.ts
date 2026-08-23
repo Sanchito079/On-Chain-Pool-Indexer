@@ -1,0 +1,26 @@
+export type RaydiumClmmPoolRecord = {
+  address: string;
+  poolType: 'raydium_clmm';
+  programId: string;
+  network: string;
+  ammConfig: string;
+  owner: string;
+  tokenMint0: string;
+  tokenMint0Symbol: string | null;
+  tokenMint0Decimals: number;
+  tokenMint0TotalSupplyRaw: string;
+  tokenMint0LogoUrl: string | null;
+  tokenMint1: string;
+  tokenMint1Symbol: string | null;
+  tokenMint1Decimals: number;
+  tokenMint1TotalSupplyRaw: string;
+  tokenMint1LogoUrl: string | null;
+  tokenVault0: string;
+  tokenVault1: string;
+  observationKey: string;
+  tickSpacing: number;
+  sqrtPriceX64: string;
+  tickCurrent: number;
+  updatedSlot: number;
+  discoveredAt: string;
+};

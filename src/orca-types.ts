@@ -1,0 +1,27 @@
+export type OrcaWhirlpoolRecord = {
+  address: string;
+  poolType: 'orca_whirlpool';
+  programId: string;
+  network: string;
+  whirlpoolsConfig: string;
+  tokenMintA: string;
+  tokenMintASymbol: string | null;
+  tokenMintADecimals: number;
+  tokenMintATotalSupplyRaw: string;
+  tokenMintALogoUrl: string | null;
+  tokenMintB: string;
+  tokenMintBSymbol: string | null;
+  tokenMintBDecimals: number;
+  tokenMintBTotalSupplyRaw: string;
+  tokenMintBLogoUrl: string | null;
+  tokenVaultA: string;
+  tokenVaultB: string;
+  tickSpacing: number;
+  feeRate: number;
+  protocolFeeRate: number;
+  liquidity: string;
+  sqrtPriceX64: string;
+  tickCurrentIndex: number;
+  updatedSlot: number;
+  discoveredAt: string;
+};
