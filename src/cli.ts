@@ -30,6 +30,8 @@ import { PancakeSwapV3Indexer } from './evm/bsc/pancakeswap-v3-indexer.js';
 import { PancakeSwapV3Price } from './evm/bsc/pancakeswap-v3-price.js';
 import { PancakeSwapInfinityClPrice } from './evm/bsc/pancakeswap-infinity-price.js';
 import { PancakeSwapInfinityIndexer } from './evm/bsc/pancakeswap-infinity-indexer.js';
+import { UniswapV3Indexer } from './evm/bsc/uniswap-v3-indexer.js';
+import { UniswapV3Price } from './evm/bsc/uniswap-v3-price.js';
 
 const rpcUrl = process.env.SOLANA_WS_RPC_URL ?? process.env.SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com';
 const transport = (process.env.INDEXER_TRANSPORT ?? 'grpc').toLowerCase();
@@ -74,7 +76,15 @@ try {
   await database.ready();
   const grpcEndpoint = process.env.SOLANA_GRPC_ENDPOINT;
   const grpcApiKey = process.env.TATUM_API_KEY;
-  if (transport === 'bsc-pancakeswap-v3' || transport === 'pancakeswap-v3') {
+  if (transport === 'bsc-uniswap-v3' || transport === 'uniswap-v3') {
+    const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
+    const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
+    console.log('Indexer transport: BSC Uniswap V3 only. Solana streams are disabled.');
+    await new UniswapV3Indexer(database, bscHttpUrl, bscWsUrl, undefined, (price: UniswapV3Price) => {
+      database.upsertUniswapV3Price(price);
+      console.log(`[BSC Uniswap V3] ${price.baseToken}/${price.quoteToken}: ${price.price ?? 'n/a'} (inverse ${price.inversePrice ?? 'n/a'})`);
+    }).start();
+  } else if (transport === 'bsc-pancakeswap-v3' || transport === 'pancakeswap-v3') {
     const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
     const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
     console.log('Indexer transport: BSC PancakeSwap V3 only. Solana streams are disabled.');

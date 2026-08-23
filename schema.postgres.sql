@@ -209,6 +209,24 @@ CREATE TABLE IF NOT EXISTS bsc_pancakeswap_v3_pools (
 CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v3_token0_idx ON bsc_pancakeswap_v3_pools(token0);
 CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v3_token1_idx ON bsc_pancakeswap_v3_pools(token1);
 
+CREATE TABLE IF NOT EXISTS bsc_uniswap_v3_pools (
+  address TEXT PRIMARY KEY, pool_type TEXT NOT NULL, chain TEXT NOT NULL, factory TEXT NOT NULL,
+  token0 TEXT NOT NULL, token0_symbol TEXT, token0_decimals INTEGER NOT NULL,
+  token1 TEXT NOT NULL, token1_symbol TEXT, token1_decimals INTEGER NOT NULL,
+  fee INTEGER NOT NULL, tick_spacing INTEGER NOT NULL, transaction_hash TEXT NOT NULL,
+  block_number BIGINT NOT NULL, discovered_at TIMESTAMPTZ NOT NULL,
+  indexed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS bsc_uniswap_v3_token0_idx ON bsc_uniswap_v3_pools(token0);
+CREATE INDEX IF NOT EXISTS bsc_uniswap_v3_token1_idx ON bsc_uniswap_v3_pools(token1);
+
+CREATE TABLE IF NOT EXISTS bsc_uniswap_v3_prices (
+  pool_address TEXT PRIMARY KEY, price DOUBLE PRECISION, inverse_price DOUBLE PRECISION,
+  base_token TEXT NOT NULL, quote_token TEXT NOT NULL, sqrt_price_x96 NUMERIC NOT NULL,
+  liquidity NUMERIC NOT NULL, tick INTEGER NOT NULL, updated_block BIGINT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS bsc_pancakeswap_infinity_cl_pools (
   address TEXT PRIMARY KEY, pool_type TEXT NOT NULL, chain TEXT NOT NULL, manager TEXT NOT NULL, pool_id TEXT NOT NULL,
   currency0 TEXT NOT NULL, currency0_symbol TEXT, currency0_decimals INTEGER NOT NULL,

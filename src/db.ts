@@ -133,6 +133,20 @@ export class PoolDatabase {
       liquidity TEXT NOT NULL, tick INTEGER NOT NULL, fee INTEGER NOT NULL,
       updated_block INTEGER NOT NULL, updated_at TEXT NOT NULL
     );`);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS bsc_uniswap_v3_pools (
+      address TEXT PRIMARY KEY, pool_type TEXT NOT NULL, chain TEXT NOT NULL, factory TEXT NOT NULL,
+      token0 TEXT NOT NULL, token0_symbol TEXT, token0_decimals INTEGER NOT NULL,
+      token1 TEXT NOT NULL, token1_symbol TEXT, token1_decimals INTEGER NOT NULL,
+      fee INTEGER NOT NULL, tick_spacing INTEGER NOT NULL, transaction_hash TEXT NOT NULL,
+      block_number INTEGER NOT NULL, discovered_at TEXT NOT NULL, indexed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS bsc_uniswap_v3_token0_idx ON bsc_uniswap_v3_pools(token0);
+    CREATE INDEX IF NOT EXISTS bsc_uniswap_v3_token1_idx ON bsc_uniswap_v3_pools(token1);`);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS bsc_uniswap_v3_prices (
+      pool_address TEXT PRIMARY KEY, price REAL, inverse_price REAL, base_token TEXT NOT NULL,
+      quote_token TEXT NOT NULL, sqrt_price_x96 TEXT NOT NULL, liquidity TEXT NOT NULL,
+      tick INTEGER NOT NULL, updated_block INTEGER NOT NULL, updated_at TEXT NOT NULL
+    );`);
     for (const column of ['base_logo_url', 'quote_logo_url']) {
       const exists = this.db.prepare('SELECT 1 FROM pragma_table_info(\'pools\') WHERE name = ?').get(column);
       if (!exists) this.db.exec(`ALTER TABLE pools ADD COLUMN ${column} TEXT`);
@@ -224,6 +238,32 @@ export class PoolDatabase {
       currency0_decimals AS currency0Decimals, currency1, currency1_symbol AS currency1Symbol, currency1_decimals AS currency1Decimals,
       hooks, fee, parameters, sqrt_price_x96 AS sqrtPriceX96, tick, transaction_hash AS transactionHash, block_number AS blockNumber,
       discovered_at AS discoveredAt FROM bsc_pancakeswap_infinity_cl_pools ORDER BY indexed_at DESC`).all() as Array<import('./evm/bsc/pancakeswap-infinity-types.js').PancakeSwapInfinityClPoolRecord>;
+  }
+
+  upsertUniswapV3Pool(pool: import('./evm/bsc/uniswap-v3-types.js').UniswapV3PoolRecord): void {
+    this.db.prepare(`INSERT INTO bsc_uniswap_v3_pools (address, pool_type, chain, factory, token0, token0_symbol, token0_decimals,
+      token1, token1_symbol, token1_decimals, fee, tick_spacing, transaction_hash, block_number, discovered_at)
+      VALUES (@address, @poolType, @chain, @factory, @token0, @token0Symbol, @token0Decimals, @token1, @token1Symbol,
+      @token1Decimals, @fee, @tickSpacing, @transactionHash, @blockNumber, @discoveredAt)
+      ON CONFLICT(address) DO UPDATE SET token0_symbol=excluded.token0_symbol, token1_symbol=excluded.token1_symbol,
+      fee=excluded.fee, tick_spacing=excluded.tick_spacing, indexed_at=CURRENT_TIMESTAMP`).run(pool);
+    this.postgres?.writeUniswapV3(pool);
+  }
+
+  uniswapV3Pools(): Array<import('./evm/bsc/uniswap-v3-types.js').UniswapV3PoolRecord> {
+    return this.db.prepare(`SELECT address, pool_type AS poolType, chain, factory, token0, token0_symbol AS token0Symbol,
+      token0_decimals AS token0Decimals, token1, token1_symbol AS token1Symbol, token1_decimals AS token1Decimals,
+      fee, tick_spacing AS tickSpacing, transaction_hash AS transactionHash, block_number AS blockNumber, discovered_at AS discoveredAt
+      FROM bsc_uniswap_v3_pools ORDER BY indexed_at DESC`).all() as Array<import('./evm/bsc/uniswap-v3-types.js').UniswapV3PoolRecord>;
+  }
+
+  upsertUniswapV3Price(price: import('./evm/bsc/uniswap-v3-price.js').UniswapV3Price): void {
+    this.db.prepare(`INSERT INTO bsc_uniswap_v3_prices (pool_address, price, inverse_price, base_token, quote_token, sqrt_price_x96, liquidity, tick, updated_block, updated_at)
+      VALUES (@poolAddress, @price, @inversePrice, @baseToken, @quoteToken, @sqrtPriceX96, @liquidity, @tick, @updatedBlock, @updatedAt)
+      ON CONFLICT(pool_address) DO UPDATE SET price=excluded.price, inverse_price=excluded.inverse_price, base_token=excluded.base_token,
+      quote_token=excluded.quote_token, sqrt_price_x96=excluded.sqrt_price_x96, liquidity=excluded.liquidity, tick=excluded.tick,
+      updated_block=excluded.updated_block, updated_at=excluded.updated_at`).run({ ...price, sqrtPriceX96: price.sqrtPriceX96.toString(), liquidity: price.liquidity.toString() });
+    this.postgres?.writeUniswapV3Price(price);
   }
 
   upsertPancakeSwapInfinityPrice(price: import('./evm/bsc/pancakeswap-infinity-price.js').PancakeSwapInfinityClPrice): void {
