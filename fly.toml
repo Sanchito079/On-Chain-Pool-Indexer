@@ -1,4 +1,4 @@
-app = "onchain-pool-indexer"
+app = "on-chain-pool-indexer"
 primary_region = "ams"
 
 [build]

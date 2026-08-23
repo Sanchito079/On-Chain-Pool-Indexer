@@ -37,11 +37,11 @@ Set `TATUM_STREAMS=raydium`, `pumpswap`, `meteora`, `dlmm`, or `both` to run onl
 
 ## Deploy to Fly.io
 
-The included `fly.toml` deploys one always-on machine with a persistent volume mounted at `/app/data`. This is the correct shape for a short live monitoring trial with SQLite. Create the app and volume once, using a globally unique app name if `onchain-pool-indexer` is already taken:
+The included `fly.toml` deploys one always-on machine with a persistent volume mounted at `/app/data`. This is the correct shape for a short live monitoring trial with SQLite. Create the app and volume once, using a globally unique app name if `on-chain-pool-indexer` is already taken:
 
 ```powershell
-fly launch --no-deploy --copy-config --name onchain-pool-indexer
-fly volumes create indexer_data --region ams --size 1
+fly apps create on-chain-pool-indexer
+fly volumes create indexer_data --region ams --size 1 --app on-chain-pool-indexer
 ```
 
 Set provider credentials as Fly secrets rather than committing `.env`:
@@ -53,10 +53,10 @@ fly secrets set `
 	SOLANA_HTTP_RPC_URLS="https://your-infura-solana-endpoint-1,https://your-infura-solana-endpoint-2" `
 	CHAINLINK_ETHEREUM_RPC_URL="https://your-ethereum-rpc" `
 	CHAINLINK_BSC_RPC_URL="https://your-bsc-rpc"
-fly deploy
+fly deploy --app on-chain-pool-indexer
 ```
 
-Monitor the machine with `fly status`, `fly logs`, and `fly checks list`. The health endpoint is `https://onchain-pool-indexer.fly.dev/healthz` after deployment. Inspect the persistent SQLite data with `fly ssh console -C "node -e \"import Database from 'better-sqlite3'; const db = new Database('/app/data/pumpswap.db', {readonly:true}); console.log(db.prepare('select count(*) as pools from pools').get()); db.close();\""`.
+Monitor the machine with `fly status --app on-chain-pool-indexer`, `fly logs --app on-chain-pool-indexer`, and `fly checks list --app on-chain-pool-indexer`. The health endpoint is `https://on-chain-pool-indexer.fly.dev/healthz` after deployment. Inspect the persistent SQLite data with `fly ssh console --app on-chain-pool-indexer -C "node -e \"import Database from 'better-sqlite3'; const db = new Database('/app/data/pumpswap.db', {readonly:true}); console.log(db.prepare('select count(*) as pools from pools').get()); db.close();\""`.
 
 The complete SQLite DDL is in `schema.sql`. The application also creates and migrates these tables automatically on startup. Do not use multiple Fly machines with this SQLite volume; move to Postgres before scaling horizontally.
 
