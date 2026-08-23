@@ -2,6 +2,7 @@ import { Contract, Interface, JsonRpcProvider, WebSocketProvider, id, type Log, 
 import { PoolDatabase } from '../../db.js';
 import { PANCAKESWAP_V2_FACTORY, PANCAKESWAP_V2_FACTORY_ABI, ERC20_METADATA_ABI } from './pancakeswap-v2-constants.js';
 import { PancakeSwapV2PoolRecord } from './pancakeswap-v2-types.js';
+import { calculatePancakeSwapV2Price, decodeSyncLog, syncTopic, type PancakeSwapV2Price } from './pancakeswap-v2-price.js';
 
 const pairCreatedTopic = id('PairCreated(address,address,address,uint256)');
 const factoryInterface = new Interface(PANCAKESWAP_V2_FACTORY_ABI);
@@ -17,12 +18,12 @@ export class PancakeSwapV2Indexer {
   private readonly provider: JsonRpcProvider;
   private readonly seen = new Set<string>();
 
-  constructor(private readonly database: PoolDatabase, httpUrl: string, private readonly wsUrl: string, private readonly factory = PANCAKESWAP_V2_FACTORY) {
+  constructor(private readonly database: PoolDatabase, httpUrl: string, private readonly wsUrl: string, private readonly factory = PANCAKESWAP_V2_FACTORY, private readonly onPrice?: (price: PancakeSwapV2Price) => void) {
     this.provider = new JsonRpcProvider(httpUrl, 56, { staticNetwork: true });
   }
 
   async start(): Promise<void> {
-    for (const pool of this.database.pancakeSwapV2Pools()) this.seen.add(pool.address.toLowerCase());
+    for (const pool of this.database.pancakeSwapV2Pools()) { this.seen.add(pool.address.toLowerCase()); this.subscribePair(pool); }
     this.socket = new WebSocketProvider(this.wsUrl) as WebSocketProvider;
     this.socket.on({ address: this.factory, topics: [pairCreatedTopic] }, (log) => {
       void this.handleLog(log).catch((error: unknown) => console.error('PancakeSwap V2 pool failed:', error));
@@ -52,7 +53,17 @@ export class PancakeSwapV2Indexer {
       discoveredAt: new Date().toISOString(),
     };
     this.database.upsertPancakeSwapV2Pool(record);
+    this.subscribePair(record);
     console.log(`Indexed new PancakeSwap V2 BSC pool ${pair} (${record.token0Symbol ?? token0}/${record.token1Symbol ?? token1}).`);
+  }
+
+  private subscribePair(pool: PancakeSwapV2PoolRecord): void {
+    if (!this.socket) return;
+    this.socket.on({ address: pool.address, topics: [syncTopic] }, (log) => {
+      const reserves = decodeSyncLog(log);
+      if (!reserves) return;
+      this.onPrice?.(calculatePancakeSwapV2Price(pool, reserves.reserve0, reserves.reserve1, log.blockNumber));
+    });
   }
 
   private async metadata(address: string): Promise<{ symbol: string | null; decimals: number }> {

@@ -74,7 +74,11 @@ try {
     const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
     const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
     console.log('Indexer transport: BSC PancakeSwap V2 only. Solana streams are disabled.');
-    await new PancakeSwapV2Indexer(database, bscHttpUrl, bscWsUrl).start();
+    await new PancakeSwapV2Indexer(database, bscHttpUrl, bscWsUrl, undefined, (price) => {
+      database.upsertPancakeSwapV2Price(price);
+      const change = price.price === null ? 'n/a' : price.price.toString();
+      console.log(`[BSC PancakeSwap V2] ${price.baseToken}/${price.quoteToken}: ${change} (inverse ${price.inversePrice ?? 'n/a'})`);
+    }).start();
   } else if (transport === 'grpc' && grpcEndpoint && grpcApiKey) {
     const streams = new Set((process.env.TATUM_STREAMS ?? 'both').split(',').map((stream) => stream.trim().toLowerCase()));
     const prices = new PriceWebSocket(grpcEndpoint, handlePrice, httpUrls);

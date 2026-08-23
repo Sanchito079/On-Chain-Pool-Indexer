@@ -198,4 +198,16 @@ CREATE TABLE IF NOT EXISTS bsc_pancakeswap_v2_pools (
 CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v2_token0_idx ON bsc_pancakeswap_v2_pools(token0);
 CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v2_token1_idx ON bsc_pancakeswap_v2_pools(token1);
 
+CREATE TABLE IF NOT EXISTS bsc_pancakeswap_v2_prices (
+  pool_address TEXT PRIMARY KEY,
+  reserve0 NUMERIC NOT NULL,
+  reserve1 NUMERIC NOT NULL,
+  price DOUBLE PRECISION,
+  inverse_price DOUBLE PRECISION,
+  base_token TEXT NOT NULL,
+  quote_token TEXT NOT NULL,
+  updated_block BIGINT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL
+);
+
 COMMIT;

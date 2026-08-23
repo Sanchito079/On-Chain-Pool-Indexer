@@ -98,6 +98,11 @@ export class PoolDatabase {
     );
     CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v2_token0_idx ON bsc_pancakeswap_v2_pools(token0);
     CREATE INDEX IF NOT EXISTS bsc_pancakeswap_v2_token1_idx ON bsc_pancakeswap_v2_pools(token1);`);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS bsc_pancakeswap_v2_prices (
+      pool_address TEXT PRIMARY KEY, reserve0 TEXT NOT NULL, reserve1 TEXT NOT NULL,
+      price REAL, inverse_price REAL, base_token TEXT NOT NULL, quote_token TEXT NOT NULL,
+      updated_block INTEGER NOT NULL, updated_at TEXT NOT NULL
+    );`);
     for (const column of ['base_logo_url', 'quote_logo_url']) {
       const exists = this.db.prepare('SELECT 1 FROM pragma_table_info(\'pools\') WHERE name = ?').get(column);
       if (!exists) this.db.exec(`ALTER TABLE pools ADD COLUMN ${column} TEXT`);
@@ -155,6 +160,14 @@ export class PoolDatabase {
       token0_decimals AS token0Decimals, token1, token1_symbol AS token1Symbol, token1_decimals AS token1Decimals,
       pair_index AS pairIndex, transaction_hash AS transactionHash, block_number AS blockNumber, discovered_at AS discoveredAt
       FROM bsc_pancakeswap_v2_pools ORDER BY indexed_at DESC`).all() as Array<import('./evm/bsc/pancakeswap-v2-types.js').PancakeSwapV2PoolRecord>;
+  }
+
+  upsertPancakeSwapV2Price(price: import('./evm/bsc/pancakeswap-v2-price.js').PancakeSwapV2Price): void {
+    this.db.prepare(`INSERT INTO bsc_pancakeswap_v2_prices (pool_address, reserve0, reserve1, price, inverse_price, base_token, quote_token, updated_block, updated_at)
+      VALUES (@poolAddress, @reserve0, @reserve1, @price, @inversePrice, @baseToken, @quoteToken, @updatedBlock, @updatedAt)
+      ON CONFLICT(pool_address) DO UPDATE SET reserve0=excluded.reserve0, reserve1=excluded.reserve1, price=excluded.price,
+      inverse_price=excluded.inverse_price, base_token=excluded.base_token, quote_token=excluded.quote_token,
+      updated_block=excluded.updated_block, updated_at=excluded.updated_at`).run({ ...price, reserve0: price.reserve0.toString(), reserve1: price.reserve1.toString() });
   }
 
   upsertRaydiumPool(pool: import('./raydium-types.js').RaydiumClmmPoolRecord): void {
