@@ -1,6 +1,6 @@
 import { Contract, Interface, JsonRpcProvider, WebSocketProvider, id, type Log, type WebSocketLike } from 'ethers';
 import { PoolDatabase } from '../../db.js';
-import { UNISWAP_V4_BSC_POOL_MANAGER, UNISWAP_V4_POOL_MANAGER_ABI, UNISWAP_V4_ERC20_ABI } from './uniswap-v4-constants.js';
+import { UNISWAP_V4_BSC_POOL_MANAGER, UNISWAP_V4_BSC_STATE_VIEW, UNISWAP_V4_POOL_MANAGER_ABI, UNISWAP_V4_STATE_VIEW_ABI, UNISWAP_V4_ERC20_ABI } from './uniswap-v4-constants.js';
 import { UniswapV4PoolRecord } from './uniswap-v4-types.js';
 import { calculateUniswapV4Price, decodeUniswapV4Swap, uniswapV4SwapTopic, type UniswapV4Price } from './uniswap-v4-price.js';
 
@@ -13,6 +13,7 @@ export function decodeUniswapV4Initialize(log: Pick<Log, 'topics' | 'data'>): { 
 
 export class UniswapV4Indexer {
   private readonly provider: JsonRpcProvider;
+  private readonly stateView: Contract;
   private readonly manager: string;
   private socket: WebSocketProvider | undefined;
   private readonly seen = new Set<string>();
@@ -22,6 +23,7 @@ export class UniswapV4Indexer {
     if (!manager) throw new Error('UNISWAP_V4_BSC_POOL_MANAGER is required');
     this.manager = manager;
     this.provider = new JsonRpcProvider(httpUrl, 56, { staticNetwork: true });
+    this.stateView = new Contract(UNISWAP_V4_BSC_STATE_VIEW, UNISWAP_V4_STATE_VIEW_ABI, this.provider);
   }
 
   async start(): Promise<void> {
@@ -42,6 +44,8 @@ export class UniswapV4Indexer {
     console.log(`BSC Uniswap V4 WebSocket active for manager ${this.manager}.`);
     await new Promise<void>((resolve, reject) => { const websocket = (this.socket as unknown as { websocket?: WebSocketLike & { on?: (event: string, listener: (...args: never[]) => void) => void } }).websocket; websocket?.on?.('close', resolve); websocket?.on?.('error', reject); });
     await this.socket.destroy(); this.socket = undefined;
+    const pools = this.database.uniswapV4Pools();
+    await Promise.all(pools.map((pool) => this.bootstrapPool(pool).catch((error: unknown) => console.error(`Uniswap V4 StateView failed for ${pool.poolId}:`, error instanceof Error ? error.message : error))));
   }
 
   private async handleInitialize(log: Log): Promise<void> {
@@ -52,6 +56,14 @@ export class UniswapV4Indexer {
     this.database.upsertUniswapV4Pool(pool);
     this.poolsById.set(pool.poolId.toLowerCase(), pool);
     console.log(`Indexed new Uniswap V4 BSC pool ${parsed.poolId} (${pool.currency0Symbol ?? pool.currency0}/${pool.currency1Symbol ?? pool.currency1}).`);
+  }
+
+  private async bootstrapPool(pool: UniswapV4PoolRecord): Promise<void> {
+    const state = await this.stateView.getSlot0(pool.poolId) as [bigint, number, number, number];
+    const [sqrtPriceX96, tick, , lpFee] = state;
+    if (sqrtPriceX96 === 0n) return;
+    const liquidity = await this.stateView.getLiquidity(pool.poolId).catch(() => 0n) as bigint;
+    this.onPrice?.(calculateUniswapV4Price(pool, sqrtPriceX96, liquidity, Number(tick), Number(lpFee), await this.provider.getBlockNumber()));
   }
 
   private async metadata(address: string): Promise<{ symbol: string | null; decimals: number }> {
