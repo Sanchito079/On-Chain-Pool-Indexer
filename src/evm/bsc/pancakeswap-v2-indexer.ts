@@ -23,8 +23,8 @@ export class PancakeSwapV2Indexer {
   }
 
   async start(): Promise<void> {
-    for (const pool of this.database.pancakeSwapV2Pools()) { this.seen.add(pool.address.toLowerCase()); this.subscribePair(pool); }
     this.socket = new WebSocketProvider(this.wsUrl) as WebSocketProvider;
+    for (const pool of this.database.pancakeSwapV2Pools()) { this.seen.add(pool.address.toLowerCase()); this.subscribePair(pool); }
     this.socket.on({ address: this.factory, topics: [pairCreatedTopic] }, (log) => {
       void this.handleLog(log).catch((error: unknown) => console.error('PancakeSwap V2 pool failed:', error));
     });
