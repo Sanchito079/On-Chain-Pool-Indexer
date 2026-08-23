@@ -66,11 +66,13 @@ The PostgreSQL DDL is in `schema.postgres.sql`. Run it with `psql` using the dir
 
 ```powershell
 $env:DATABASE_URL = "paste-the-rotated-postgres-url-here"
-psql "$env:DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.postgres.sql
+npm run db:migrate-postgres
 Remove-Item Env:DATABASE_URL
 ```
 
-The `pgbouncer` URL can be suitable for application traffic, but a direct connection URL is preferable for DDL and migrations. Do not commit the URL or put it in a command saved to shell history. The current indexer still uses SQLite through `better-sqlite3`; this PostgreSQL schema only prepares the database. The application must be migrated to a PostgreSQL adapter before `DATABASE_URL` will be used for runtime writes.
+The same migration runs on the production image after setting `DATABASE_URL` as a Fly secret: `fly ssh console -C "node dist/src/migrate-postgres.js"`.
+
+The `pgbouncer` URL can be suitable for application traffic, but a direct connection URL is preferable for DDL and migrations. Do not commit the URL or put it in a command saved to shell history. Set `DATABASE_BACKEND=postgres` and `DATABASE_URL` to enable PostgreSQL runtime writes. SQLite remains active as the local synchronous cache and development database, so existing indexer APIs continue to work while writes are mirrored to PostgreSQL. Leave `DATABASE_BACKEND=sqlite` for SQLite-only development.
 
 Inspect stored pools from another PowerShell terminal with:
 

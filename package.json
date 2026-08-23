@@ -11,6 +11,7 @@
     "db:refresh-metadata": "tsx src/refresh-metadata.ts",
     "db:refresh-meteora-prices": "tsx src/refresh-meteora-prices.ts",
     "db:refresh-meteora-supply": "tsx src/refresh-meteora-supply.ts",
+    "db:migrate-postgres": "tsx src/migrate-postgres.ts",
     "grpc:check": "tsx src/grpc-check.ts",
     "test": "tsx --test test/**/*.test.ts"
   },
@@ -20,11 +21,13 @@
     "better-sqlite3": "^11.10.0",
     "bs58": "^6.0.0",
     "dotenv": "^17.4.2",
+    "pg": "^8.23.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.15.21",
+    "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.1",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"

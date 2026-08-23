@@ -2,13 +2,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { PoolRecord } from './types.js';
+import { PostgresWriter } from './postgres.js';
 
 export class PoolDatabase {
   private readonly db: Database.Database;
+  private readonly postgres: PostgresWriter | undefined;
 
   constructor(filePath: string) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     this.db = new Database(filePath);
+    this.postgres = process.env.DATABASE_BACKEND === 'postgres' && process.env.DATABASE_URL ? new PostgresWriter(process.env.DATABASE_URL) : undefined;
     this.db.pragma('journal_mode = WAL');
     this.db.exec(`CREATE TABLE IF NOT EXISTS pools (
       address TEXT PRIMARY KEY, pool_type TEXT NOT NULL, program_id TEXT NOT NULL, network TEXT NOT NULL,
@@ -121,6 +124,7 @@ export class PoolDatabase {
       pool_quote_token_account=excluded.pool_quote_token_account, creator=excluded.creator,
       coin_creator=excluded.coin_creator, pool_index=excluded.pool_index, updated_slot=excluded.updated_slot,
       discovered_at=excluded.discovered_at, indexed_at=CURRENT_TIMESTAMP`).run(pool);
+    this.postgres?.writePool(pool);
   }
 
   count(): number {
@@ -137,6 +141,7 @@ export class PoolDatabase {
       @tokenMint1TotalSupplyRaw, @tokenMint1LogoUrl, @tokenVault0, @tokenVault1, @observationKey, @tickSpacing, @sqrtPriceX64,
       @tickCurrent, @updatedSlot, @discoveredAt)
       ON CONFLICT(address) DO UPDATE SET updated_slot=excluded.updated_slot, indexed_at=CURRENT_TIMESTAMP`).run(pool);
+    this.postgres?.writeRaydium(pool);
   }
 
   raydiumCount(): number {
@@ -153,6 +158,7 @@ export class PoolDatabase {
       @tokenMintBSymbol, @tokenMintBDecimals, @tokenMintBTotalSupplyRaw, @tokenMintBLogoUrl, @tokenVaultA, @tokenVaultB,
       @tickSpacing, @feeRate, @protocolFeeRate, @liquidity, @sqrtPriceX64, @tickCurrentIndex, @updatedSlot, @discoveredAt)
       ON CONFLICT(address) DO UPDATE SET updated_slot=excluded.updated_slot, indexed_at=CURRENT_TIMESTAMP`).run(pool);
+    this.postgres?.writeOrca(pool);
   }
 
   orcaWhirlpoolCount(): number {
@@ -197,6 +203,7 @@ export class PoolDatabase {
       ON CONFLICT(address) DO UPDATE SET token_a_amount=excluded.token_a_amount, token_b_amount=excluded.token_b_amount,
       sqrt_price=excluded.sqrt_price, activation_point=excluded.activation_point, updated_slot=excluded.updated_slot,
       indexed_at=CURRENT_TIMESTAMP`).run(pool);
+    this.postgres?.writeMeteora(pool);
   }
 
   meteoraCount(): number {
@@ -212,6 +219,7 @@ export class PoolDatabase {
       @tokenYLogoUrl, @reserveX, @reserveY, @oracle, @activeId, @binStep, @activationPoint, @updatedSlot,
       @discoveredAt) ON CONFLICT(address) DO UPDATE SET active_id=excluded.active_id, bin_step=excluded.bin_step,
       activation_point=excluded.activation_point, updated_slot=excluded.updated_slot, indexed_at=CURRENT_TIMESTAMP`).run(pool);
+    this.postgres?.writeDlmm(pool);
   }
 
   dlmmCount(): number {
@@ -257,6 +265,7 @@ export class PoolDatabase {
 
   recordPrice(price: import('./price-fetcher/types.js').PoolPrice, timestamp = Date.now()): void {
     if (price.price === null) return;
+    this.postgres?.writePrice(price, timestamp);
     const now = new Date(timestamp).toISOString();
     this.db.prepare(`INSERT INTO latest_prices (pool_address, price, inverse_price, price_change, price_change_percent, price_change_direction, fdv_usd, token_price_usd, total_supply, supply_basis, base_reserve, quote_reserve, updated_slot, updated_at)
       VALUES (@poolAddress, @price, @inversePrice, @priceChange, @priceChangePercent, @priceChangeDirection, @fdvUsd, @tokenPriceUsd, @totalSupply, @supplyBasis, @baseReserve, @quoteReserve, @updatedSlot, @updatedAt)
@@ -306,5 +315,7 @@ export class PoolDatabase {
       quote_decimals AS quoteDecimals, pool_quote_token_account AS poolQuoteTokenAccount FROM pools`).all() as Array<import('./price-fetcher/types.js').PoolForPricing>;
   }
 
-  close(): void { this.db.close(); }
+  async ready(): Promise<void> { await this.postgres?.ready(); }
+
+  close(): void { this.postgres?.close(); this.db.close(); }
 }

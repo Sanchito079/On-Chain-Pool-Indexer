@@ -8,6 +8,7 @@ primary_region = "ams"
   NODE_ENV = "production"
   PORT = "8080"
   DATABASE_PATH = "/app/data/pumpswap.db"
+  DATABASE_BACKEND = "postgres"
   INDEXER_TRANSPORT = "websocket"
 
 [mounts]
