@@ -34,6 +34,8 @@ import { UniswapV3Indexer } from './evm/bsc/uniswap-v3-indexer.js';
 import { UniswapV3Price } from './evm/bsc/uniswap-v3-price.js';
 import { UniswapV4Indexer } from './evm/bsc/uniswap-v4-indexer.js';
 import { UniswapV4Price } from './evm/bsc/uniswap-v4-price.js';
+import { BaseUniswapV4Indexer } from './evm/base/uniswap-v4-indexer.js';
+import { BASE_HTTP_RPC_URL, BASE_WS_RPC_URL, UNISWAP_V4_BASE_POOL_MANAGER, UNISWAP_V4_BASE_STATE_VIEW } from './evm/base/uniswap-v4-constants.js';
 
 const rpcUrl = process.env.SOLANA_WS_RPC_URL ?? process.env.SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com';
 const transport = (process.env.INDEXER_TRANSPORT ?? 'grpc').toLowerCase();
@@ -78,7 +80,13 @@ try {
   await database.ready();
   const grpcEndpoint = process.env.SOLANA_GRPC_ENDPOINT;
   const grpcApiKey = process.env.TATUM_API_KEY;
-  if (transport === 'bsc-uniswap-v4' || transport === 'uniswap-v4') {
+  if (transport === 'base-uniswap-v4') {
+    console.log('Indexer transport: Base Uniswap V4 only. Solana and BSC streams are disabled.');
+    await new BaseUniswapV4Indexer(database, BASE_HTTP_RPC_URL, BASE_WS_RPC_URL, UNISWAP_V4_BASE_POOL_MANAGER, UNISWAP_V4_BASE_STATE_VIEW, (price) => {
+      database.upsertBaseUniswapV4Price(price);
+      console.log(`[Base Uniswap V4] ${price.baseCurrency}/${price.quoteCurrency}: ${price.price ?? 'n/a'} (inverse ${price.inversePrice ?? 'n/a'})`);
+    }).start();
+  } else if (transport === 'bsc-uniswap-v4' || transport === 'uniswap-v4') {
     const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
     const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
     console.log('Indexer transport: BSC Uniswap V4 only. Solana streams are disabled.');

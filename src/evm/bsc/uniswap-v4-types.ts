@@ -1,7 +1,7 @@
 export type UniswapV4PoolRecord = {
   address: string;
   poolType: 'uniswap_v4';
-  chain: 'bsc';
+  chain: 'bsc' | 'base';
   manager: string;
   poolId: string;
   currency0: string;

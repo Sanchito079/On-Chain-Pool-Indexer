@@ -45,6 +45,8 @@ Set `INDEXER_TRANSPORT=bsc-uniswap-v3` to run only Uniswap V3 BSC indexing and p
 
 Set `INDEXER_TRANSPORT=bsc-uniswap-v4` to run only Uniswap v4 BSC indexing and concentrated-liquidity pricing. It uses the official BNB Smart Chain PoolManager `0x28e2ea090877bf75740558f6bfb36a5ffee9e9df`, listens for singleton `Initialize` and `Swap` events keyed by `poolId`, and stores data in `bsc_uniswap_v4_pools` and `bsc_uniswap_v4_prices`.
 
+Set `INDEXER_TRANSPORT=base-uniswap-v4` to run only Uniswap v4 on Base. It uses Base PoolManager `0x498581ff718922c3f8e6a244956af099b2652b2b` and StateView `0xa3c0c9b65bad0b08107aa264b0f3db444b867a71`, with data stored in `base_uniswap_v4_pools` and `base_uniswap_v4_prices`.
+
 ## Deploy to Fly.io
 
 The included `fly.toml` deploys one always-on machine with a persistent volume mounted at `/app/data`. This is the correct shape for a short live monitoring trial with SQLite. Create the app and volume once, using a globally unique app name if `on-chain-pool-indexer` is already taken:
