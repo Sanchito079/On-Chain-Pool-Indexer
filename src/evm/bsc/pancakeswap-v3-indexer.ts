@@ -25,8 +25,19 @@ export class PancakeSwapV3Indexer {
   }
 
   async start(): Promise<void> {
-    this.socket = new WebSocketProvider(this.wsUrl);
     for (const pool of this.database.pancakeSwapV3Pools()) this.seen.add(pool.address.toLowerCase());
+    while (true) {
+      try {
+        await this.connect();
+      } catch (error) {
+        console.error('PancakeSwap V3 WebSocket disconnected:', error instanceof Error ? error.message : error);
+      }
+      await new Promise<void>((resolve) => setTimeout(resolve, 1_000));
+    }
+  }
+
+  private async connect(): Promise<void> {
+    this.socket = new WebSocketProvider(this.wsUrl);
     this.socket.on({ address: this.factory, topics: [poolCreatedTopic] }, (log) => void this.handleLog(log).catch((error: unknown) => console.error('PancakeSwap V3 pool failed:', error)));
     console.log(`BSC PancakeSwap V3 WebSocket active for factory ${this.factory}.`);
     await new Promise<void>((resolve, reject) => {
@@ -34,6 +45,8 @@ export class PancakeSwapV3Indexer {
       websocket?.on?.('close', resolve);
       websocket?.on?.('error', reject);
     });
+    await this.socket.destroy();
+    this.socket = undefined;
   }
 
   private async handleLog(log: Log): Promise<void> {
