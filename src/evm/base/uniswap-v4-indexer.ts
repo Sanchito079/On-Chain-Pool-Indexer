@@ -20,6 +20,7 @@ export class BaseUniswapV4Indexer {
   private readonly stateView: Contract;
   private socket: WebSocketProvider | undefined;
   private readonly poolsById = new Map<string, UniswapV4PoolRecord>();
+  private readonly seenSwapLogs = new Set<string>();
   private readonly seen = new Set<string>();
 
   constructor(private readonly database: PoolDatabase, httpUrl: string, private readonly wsUrl: string, private readonly manager = UNISWAP_V4_BASE_POOL_MANAGER, private readonly stateViewAddress = UNISWAP_V4_BASE_STATE_VIEW, private readonly onPrice?: (price: UniswapV4Price) => void) {
@@ -37,7 +38,15 @@ export class BaseUniswapV4Indexer {
     const pools = this.database.baseUniswapV4Pools();
     for (const pool of pools) this.poolsById.set(pool.poolId.toLowerCase(), pool);
     this.socket.on({ address: this.manager, topics: [initializeTopic] }, (log) => void this.handleInitialize(log).catch((error: unknown) => console.error('Base Uniswap V4 pool failed:', error)));
-    this.socket.on({ address: this.manager, topics: [uniswapV4SwapTopic] }, (log) => { const swap = decodeUniswapV4Swap(log); const pool = swap ? this.poolsById.get(swap.poolId.toLowerCase()) : undefined; if (swap && pool) this.onPrice?.(calculateUniswapV4Price(pool, swap.sqrtPriceX96, swap.liquidity, swap.tick, swap.fee, log.blockNumber)); });
+    this.socket.on({ address: this.manager, topics: [uniswapV4SwapTopic] }, (log) => {
+      const logKey = `${log.transactionHash}:${log.index}`;
+      if (this.seenSwapLogs.has(logKey)) return;
+      this.seenSwapLogs.add(logKey);
+      if (this.seenSwapLogs.size > 10_000) this.seenSwapLogs.delete(this.seenSwapLogs.values().next().value as string);
+      const swap = decodeUniswapV4Swap(log);
+      const pool = swap ? this.poolsById.get(swap.poolId.toLowerCase()) : undefined;
+      if (swap && pool) this.onPrice?.(calculateUniswapV4Price(pool, swap.sqrtPriceX96, swap.liquidity, swap.tick, swap.fee, log.blockNumber));
+    });
     console.log(`Base Uniswap V4 WebSocket active for manager ${this.manager}.`);
     await Promise.all(pools.map((pool) => this.bootstrapPool(pool).catch((error: unknown) => console.error(`Base StateView failed for ${pool.poolId}:`, error instanceof Error ? error.message : error))));
     await new Promise<void>((resolve, reject) => { const websocket = (this.socket as unknown as { websocket?: WebSocketLike & { on?: (event: string, listener: (...args: never[]) => void) => void } }).websocket; websocket?.on?.('close', resolve); websocket?.on?.('error', reject); });

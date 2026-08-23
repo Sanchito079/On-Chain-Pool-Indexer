@@ -84,7 +84,7 @@ try {
     console.log('Indexer transport: Base Uniswap V4 only. Solana and BSC streams are disabled.');
     await new BaseUniswapV4Indexer(database, BASE_HTTP_RPC_URL, BASE_WS_RPC_URL, UNISWAP_V4_BASE_POOL_MANAGER, UNISWAP_V4_BASE_STATE_VIEW, (price) => {
       database.upsertBaseUniswapV4Price(price);
-      console.log(`[Base Uniswap V4] ${price.baseCurrency}/${price.quoteCurrency}: ${price.price ?? 'n/a'} (inverse ${price.inversePrice ?? 'n/a'})`);
+      console.log(`[Base Uniswap V4] ${price.baseSymbol ?? price.baseCurrency}/${price.quoteSymbol ?? price.quoteCurrency}: ${price.price ?? 'n/a'} (inverse ${price.inversePrice ?? 'n/a'})`);
     }).start();
   } else if (transport === 'bsc-uniswap-v4' || transport === 'uniswap-v4') {
     const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
