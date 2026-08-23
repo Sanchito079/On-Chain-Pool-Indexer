@@ -1,0 +1,21 @@
+export type PancakeSwapInfinityClPoolRecord = {
+  address: string;
+  poolType: 'pancakeswap_infinity_cl';
+  chain: 'bsc';
+  manager: string;
+  poolId: string;
+  currency0: string;
+  currency0Symbol: string | null;
+  currency0Decimals: number;
+  currency1: string;
+  currency1Symbol: string | null;
+  currency1Decimals: number;
+  hooks: string;
+  fee: number;
+  parameters: string;
+  sqrtPriceX96: string;
+  tick: number;
+  transactionHash: string;
+  blockNumber: number;
+  discoveredAt: string;
+};

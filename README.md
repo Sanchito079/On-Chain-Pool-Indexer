@@ -39,6 +39,8 @@ PancakeSwap V2 BSC pool discovery uses the factory `PairCreated` event and pair 
 
 Set `INDEXER_TRANSPORT=bsc-pancakeswap-v3` to run only PancakeSwap V3 BSC indexing and pricing. It uses the official V3 factory `0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865`, listens for `Swap` events, and stores pools in `bsc_pancakeswap_v3_pools` and prices in `bsc_pancakeswap_v3_prices`.
 
+Set `INDEXER_TRANSPORT=bsc-pancakeswap-infinity-cl` to run PancakeSwap Infinity concentrated-liquidity indexing and pricing. Configure `PANCAKESWAP_INFINITY_CL_MANAGER` with the verified BSC CLPoolManager address. Infinity is a singleton manager and emits `Initialize` and `Swap` events keyed by `poolId`; it does not use the V3 factory address. The manager address is intentionally required because it is deployment-specific and must not be guessed.
+
 ## Deploy to Fly.io
 
 The included `fly.toml` deploys one always-on machine with a persistent volume mounted at `/app/data`. This is the correct shape for a short live monitoring trial with SQLite. Create the app and volume once, using a globally unique app name if `on-chain-pool-indexer` is already taken:

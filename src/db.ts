@@ -117,6 +117,22 @@ export class PoolDatabase {
       quote_token TEXT NOT NULL, sqrt_price_x96 TEXT NOT NULL, liquidity TEXT NOT NULL,
       tick INTEGER NOT NULL, updated_block INTEGER NOT NULL, updated_at TEXT NOT NULL
     );`);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS bsc_pancakeswap_infinity_cl_pools (
+      address TEXT PRIMARY KEY, pool_type TEXT NOT NULL, chain TEXT NOT NULL, manager TEXT NOT NULL, pool_id TEXT NOT NULL,
+      currency0 TEXT NOT NULL, currency0_symbol TEXT, currency0_decimals INTEGER NOT NULL,
+      currency1 TEXT NOT NULL, currency1_symbol TEXT, currency1_decimals INTEGER NOT NULL,
+      hooks TEXT NOT NULL, fee INTEGER NOT NULL, parameters TEXT NOT NULL, sqrt_price_x96 TEXT NOT NULL,
+      tick INTEGER NOT NULL, transaction_hash TEXT NOT NULL, block_number INTEGER NOT NULL,
+      discovered_at TEXT NOT NULL, indexed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS bsc_pancakeswap_infinity_cl_currency0_idx ON bsc_pancakeswap_infinity_cl_pools(currency0);
+    CREATE INDEX IF NOT EXISTS bsc_pancakeswap_infinity_cl_currency1_idx ON bsc_pancakeswap_infinity_cl_pools(currency1);`);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS bsc_pancakeswap_infinity_cl_prices (
+      pool_id TEXT PRIMARY KEY, pool_address TEXT NOT NULL, price REAL, inverse_price REAL,
+      base_currency TEXT NOT NULL, quote_currency TEXT NOT NULL, sqrt_price_x96 TEXT NOT NULL,
+      liquidity TEXT NOT NULL, tick INTEGER NOT NULL, fee INTEGER NOT NULL,
+      updated_block INTEGER NOT NULL, updated_at TEXT NOT NULL
+    );`);
     for (const column of ['base_logo_url', 'quote_logo_url']) {
       const exists = this.db.prepare('SELECT 1 FROM pragma_table_info(\'pools\') WHERE name = ?').get(column);
       if (!exists) this.db.exec(`ALTER TABLE pools ADD COLUMN ${column} TEXT`);
@@ -192,6 +208,31 @@ export class PoolDatabase {
       token0_decimals AS token0Decimals, token1, token1_symbol AS token1Symbol, token1_decimals AS token1Decimals,
       fee, tick_spacing AS tickSpacing, transaction_hash AS transactionHash, block_number AS blockNumber, discovered_at AS discoveredAt
       FROM bsc_pancakeswap_v3_pools ORDER BY indexed_at DESC`).all() as Array<import('./evm/bsc/pancakeswap-v3-types.js').PancakeSwapV3PoolRecord>;
+  }
+
+  upsertPancakeSwapInfinityPool(pool: import('./evm/bsc/pancakeswap-infinity-types.js').PancakeSwapInfinityClPoolRecord): void {
+    this.db.prepare(`INSERT INTO bsc_pancakeswap_infinity_cl_pools (address, pool_type, chain, manager, pool_id, currency0, currency0_symbol,
+      currency0_decimals, currency1, currency1_symbol, currency1_decimals, hooks, fee, parameters, sqrt_price_x96, tick, transaction_hash, block_number, discovered_at)
+      VALUES (@address, @poolType, @chain, @manager, @poolId, @currency0, @currency0Symbol, @currency0Decimals, @currency1, @currency1Symbol,
+      @currency1Decimals, @hooks, @fee, @parameters, @sqrtPriceX96, @tick, @transactionHash, @blockNumber, @discoveredAt)
+      ON CONFLICT(address) DO UPDATE SET sqrt_price_x96=excluded.sqrt_price_x96, tick=excluded.tick, fee=excluded.fee, indexed_at=CURRENT_TIMESTAMP`).run(pool);
+    this.postgres?.writePancakeSwapInfinity(pool);
+  }
+
+  pancakeSwapInfinityPools(): Array<import('./evm/bsc/pancakeswap-infinity-types.js').PancakeSwapInfinityClPoolRecord> {
+    return this.db.prepare(`SELECT address, pool_type AS poolType, chain, manager, pool_id AS poolId, currency0, currency0_symbol AS currency0Symbol,
+      currency0_decimals AS currency0Decimals, currency1, currency1_symbol AS currency1Symbol, currency1_decimals AS currency1Decimals,
+      hooks, fee, parameters, sqrt_price_x96 AS sqrtPriceX96, tick, transaction_hash AS transactionHash, block_number AS blockNumber,
+      discovered_at AS discoveredAt FROM bsc_pancakeswap_infinity_cl_pools ORDER BY indexed_at DESC`).all() as Array<import('./evm/bsc/pancakeswap-infinity-types.js').PancakeSwapInfinityClPoolRecord>;
+  }
+
+  upsertPancakeSwapInfinityPrice(price: import('./evm/bsc/pancakeswap-infinity-price.js').PancakeSwapInfinityClPrice): void {
+    this.db.prepare(`INSERT INTO bsc_pancakeswap_infinity_cl_prices (pool_id, pool_address, price, inverse_price, base_currency, quote_currency, sqrt_price_x96, liquidity, tick, fee, updated_block, updated_at)
+      VALUES (@poolId, @poolAddress, @price, @inversePrice, @baseCurrency, @quoteCurrency, @sqrtPriceX96, @liquidity, @tick, @fee, @updatedBlock, @updatedAt)
+      ON CONFLICT(pool_id) DO UPDATE SET pool_address=excluded.pool_address, price=excluded.price, inverse_price=excluded.inverse_price,
+      base_currency=excluded.base_currency, quote_currency=excluded.quote_currency, sqrt_price_x96=excluded.sqrt_price_x96,
+      liquidity=excluded.liquidity, tick=excluded.tick, fee=excluded.fee, updated_block=excluded.updated_block, updated_at=excluded.updated_at`).run({ ...price, sqrtPriceX96: price.sqrtPriceX96.toString(), liquidity: price.liquidity.toString() });
+    this.postgres?.writePancakeSwapInfinityPrice(price);
   }
 
   upsertPancakeSwapV3Price(price: import('./evm/bsc/pancakeswap-v3-price.js').PancakeSwapV3Price): void {

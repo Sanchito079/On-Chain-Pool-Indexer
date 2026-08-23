@@ -28,6 +28,8 @@ import { OrcaPriceProcessor } from './orca-price.js';
 import { PancakeSwapV2Indexer } from './evm/bsc/pancakeswap-v2-indexer.js';
 import { PancakeSwapV3Indexer } from './evm/bsc/pancakeswap-v3-indexer.js';
 import { PancakeSwapV3Price } from './evm/bsc/pancakeswap-v3-price.js';
+import { PancakeSwapInfinityClPrice } from './evm/bsc/pancakeswap-infinity-price.js';
+import { PancakeSwapInfinityIndexer } from './evm/bsc/pancakeswap-infinity-indexer.js';
 
 const rpcUrl = process.env.SOLANA_WS_RPC_URL ?? process.env.SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com';
 const transport = (process.env.INDEXER_TRANSPORT ?? 'grpc').toLowerCase();
@@ -79,6 +81,14 @@ try {
     await new PancakeSwapV3Indexer(database, bscHttpUrl, bscWsUrl, undefined, (price: PancakeSwapV3Price) => {
       database.upsertPancakeSwapV3Price(price);
       console.log(`[BSC PancakeSwap V3] ${price.baseToken}/${price.quoteToken}: ${price.price ?? 'n/a'} (inverse ${price.inversePrice ?? 'n/a'})`);
+    }).start();
+  } else if (transport === 'bsc-pancakeswap-infinity-cl' || transport === 'pancakeswap-infinity-cl') {
+    const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
+    const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
+    console.log('Indexer transport: BSC PancakeSwap Infinity CL only. Solana streams are disabled.');
+    await new PancakeSwapInfinityIndexer(database, bscHttpUrl, bscWsUrl, undefined, (price: PancakeSwapInfinityClPrice) => {
+      database.upsertPancakeSwapInfinityPrice(price);
+      console.log(`[BSC PancakeSwap Infinity CL] ${price.baseCurrency}/${price.quoteCurrency}: ${price.price ?? 'n/a'} (inverse ${price.inversePrice ?? 'n/a'})`);
     }).start();
   } else if (transport === 'bsc-pancakeswap-v2' || transport === 'pancakeswap-v2') {
     const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
