@@ -25,6 +25,7 @@ import { isOrcaWhirlpoolCreation } from './pool-discovery.js';
 import { ORCA_WHIRLPOOL_PROGRAM_ID } from './orca-constants.js';
 import { OrcaIndexer } from './orca-indexer.js';
 import { OrcaPriceProcessor } from './orca-price.js';
+import { PancakeSwapV2Indexer } from './evm/bsc/pancakeswap-v2-indexer.js';
 
 const rpcUrl = process.env.SOLANA_WS_RPC_URL ?? process.env.SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com';
 const transport = (process.env.INDEXER_TRANSPORT ?? 'grpc').toLowerCase();
@@ -109,6 +110,10 @@ try {
     if (!rpcUrl.startsWith('ws')) throw new Error('INDEXER_TRANSPORT=websocket requires SOLANA_WS_RPC_URL');
     console.log('Indexer transport: Solana WebSocket (all protocol live paths).');
     const prices = new PriceWebSocket(rpcUrl, handlePrice, httpUrls);
+    const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
+    const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
+    const bscIndexer = new PancakeSwapV2Indexer(database, bscHttpUrl, bscWsUrl);
+    if (process.env.BSC_PANCAKESWAP_V2 !== 'false') void bscIndexer.start().catch((error: unknown) => console.error('BSC PancakeSwap V2 indexer failed:', error));
     void prices.start(database.pools()).catch((error: unknown) => console.error('Price WebSocket failed:', error));
     const protocolSocket = new SolanaAccountWebSocket(solanaWsUrls());
     const chainlinkPrices = await loadChainlinkPrices();

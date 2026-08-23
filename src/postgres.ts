@@ -7,6 +7,7 @@ import { RaydiumClmmPoolRecord } from './raydium-types.js';
 import { MeteoraDammV2PoolRecord } from './meteora-types.js';
 import { MeteoraDlmmPoolRecord } from './dlmm-types.js';
 import { OrcaWhirlpoolRecord } from './orca-types.js';
+import { PancakeSwapV2PoolRecord } from './evm/bsc/pancakeswap-v2-types.js';
 
 export class PostgresWriter {
   private readonly pool: Pool;
@@ -36,6 +37,7 @@ export class PostgresWriter {
   writeMeteora(pool: MeteoraDammV2PoolRecord): void { this.enqueue('meteora_damm_v2_pools', this.camelToSnake(pool)); }
   writeDlmm(pool: MeteoraDlmmPoolRecord): void { this.enqueue('meteora_dlmm_pools', this.camelToSnake(pool)); }
   writeOrca(pool: OrcaWhirlpoolRecord): void { this.enqueue('orca_whirlpools', this.camelToSnake(pool)); }
+  writePancakeSwapV2(pool: PancakeSwapV2PoolRecord): void { this.enqueue('bsc_pancakeswap_v2_pools', this.camelToSnake(pool)); }
 
   writePrice(price: PoolPrice, timestamp = Date.now()): void {
     if (price.price === null) return;
