@@ -293,7 +293,7 @@ export class PoolDatabase {
     this.db.prepare(`INSERT INTO bsc_uniswap_v4_pools (address, pool_type, chain, manager, pool_id, currency0, currency0_symbol, currency0_decimals, currency1, currency1_symbol, currency1_decimals, fee, tick_spacing, hooks, sqrt_price_x96, tick, transaction_hash, block_number, discovered_at)
       VALUES (@address, @poolType, @chain, @manager, @poolId, @currency0, @currency0Symbol, @currency0Decimals, @currency1, @currency1Symbol, @currency1Decimals, @fee, @tickSpacing, @hooks, @sqrtPriceX96, @tick, @transactionHash, @blockNumber, @discoveredAt)
       ON CONFLICT(address) DO UPDATE SET sqrt_price_x96=excluded.sqrt_price_x96, tick=excluded.tick, fee=excluded.fee, indexed_at=CURRENT_TIMESTAMP`).run(pool);
-    this.postgres?.writeUniswapV4(pool);
+    this.postgres?.writeBaseUniswapV4(pool);
   }
 
   uniswapV4Pools(): Array<import('./evm/bsc/uniswap-v4-types.js').UniswapV4PoolRecord> {
@@ -311,7 +311,7 @@ export class PoolDatabase {
 
   upsertBaseUniswapV4Price(price: import('./evm/bsc/uniswap-v4-price.js').UniswapV4Price): void {
     this.db.prepare(`INSERT INTO base_uniswap_v4_prices (pool_id, pool_address, price, inverse_price, base_currency, quote_currency, sqrt_price_x96, liquidity, tick, fee, updated_block, updated_at) VALUES (@poolId, @poolAddress, @price, @inversePrice, @baseCurrency, @quoteCurrency, @sqrtPriceX96, @liquidity, @tick, @fee, @updatedBlock, @updatedAt) ON CONFLICT(pool_id) DO UPDATE SET price=excluded.price, inverse_price=excluded.inverse_price, sqrt_price_x96=excluded.sqrt_price_x96, liquidity=excluded.liquidity, tick=excluded.tick, fee=excluded.fee, updated_block=excluded.updated_block, updated_at=excluded.updated_at`).run({ ...price, sqrtPriceX96: price.sqrtPriceX96.toString(), liquidity: price.liquidity.toString() });
-    this.postgres?.writeUniswapV4Price(price);
+    this.postgres?.writeBaseUniswapV4Price(price);
   }
 
   upsertUniswapV4Price(price: import('./evm/bsc/uniswap-v4-price.js').UniswapV4Price): void {

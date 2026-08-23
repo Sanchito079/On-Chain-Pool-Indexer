@@ -263,24 +263,6 @@ CREATE TABLE IF NOT EXISTS base_uniswap_v4_prices (
   updated_block BIGINT NOT NULL, updated_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS base_uniswap_v4_pools (
-  address TEXT PRIMARY KEY, pool_type TEXT NOT NULL, chain TEXT NOT NULL, manager TEXT NOT NULL, pool_id TEXT NOT NULL,
-  currency0 TEXT NOT NULL, currency0_symbol TEXT, currency0_decimals INTEGER NOT NULL,
-  currency1 TEXT NOT NULL, currency1_symbol TEXT, currency1_decimals INTEGER NOT NULL,
-  fee INTEGER NOT NULL, tick_spacing INTEGER NOT NULL, hooks TEXT NOT NULL, sqrt_price_x96 NUMERIC NOT NULL,
-  tick INTEGER NOT NULL, transaction_hash TEXT NOT NULL, block_number BIGINT NOT NULL,
-  discovered_at TIMESTAMPTZ NOT NULL, indexed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS base_uniswap_v4_currency0_idx ON base_uniswap_v4_pools(currency0);
-CREATE INDEX IF NOT EXISTS base_uniswap_v4_currency1_idx ON base_uniswap_v4_pools(currency1);
-
-CREATE TABLE IF NOT EXISTS base_uniswap_v4_prices (
-  pool_id TEXT PRIMARY KEY, pool_address TEXT NOT NULL, price DOUBLE PRECISION, inverse_price DOUBLE PRECISION,
-  base_currency TEXT NOT NULL, quote_currency TEXT NOT NULL, sqrt_price_x96 NUMERIC NOT NULL,
-  liquidity NUMERIC NOT NULL, tick INTEGER NOT NULL, fee INTEGER NOT NULL,
-  updated_block BIGINT NOT NULL, updated_at TIMESTAMPTZ NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS bsc_pancakeswap_infinity_cl_pools (
   address TEXT PRIMARY KEY, pool_type TEXT NOT NULL, chain TEXT NOT NULL, manager TEXT NOT NULL, pool_id TEXT NOT NULL,
   currency0 TEXT NOT NULL, currency0_symbol TEXT, currency0_decimals INTEGER NOT NULL,
