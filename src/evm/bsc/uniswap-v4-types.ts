@@ -1,0 +1,21 @@
+export type UniswapV4PoolRecord = {
+  address: string;
+  poolType: 'uniswap_v4';
+  chain: 'bsc';
+  manager: string;
+  poolId: string;
+  currency0: string;
+  currency0Symbol: string | null;
+  currency0Decimals: number;
+  currency1: string;
+  currency1Symbol: string | null;
+  currency1Decimals: number;
+  fee: number;
+  tickSpacing: number;
+  hooks: string;
+  sqrtPriceX96: string;
+  tick: number;
+  transactionHash: string;
+  blockNumber: number;
+  discoveredAt: string;
+};

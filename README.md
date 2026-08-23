@@ -43,6 +43,8 @@ Set `INDEXER_TRANSPORT=bsc-pancakeswap-infinity-cl` to run PancakeSwap Infinity 
 
 Set `INDEXER_TRANSPORT=bsc-uniswap-v3` to run only Uniswap V3 BSC indexing and pricing. It uses the BSC factory `0x36696169C63E42Cd08Ce11f5deeBbCeBae652050`, listens for `PoolCreated` and `Swap`, and stores data in `bsc_uniswap_v3_pools` and `bsc_uniswap_v3_prices`.
 
+Set `INDEXER_TRANSPORT=bsc-uniswap-v4` to run only Uniswap v4 BSC indexing and concentrated-liquidity pricing. It uses the official BNB Smart Chain PoolManager `0x28e2ea090877bf75740558f6bfb36a5ffee9e9df`, listens for singleton `Initialize` and `Swap` events keyed by `poolId`, and stores data in `bsc_uniswap_v4_pools` and `bsc_uniswap_v4_prices`.
+
 ## Deploy to Fly.io
 
 The included `fly.toml` deploys one always-on machine with a persistent volume mounted at `/app/data`. This is the correct shape for a short live monitoring trial with SQLite. Create the app and volume once, using a globally unique app name if `on-chain-pool-indexer` is already taken:

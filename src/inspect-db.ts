@@ -15,6 +15,7 @@ try {
   console.log(`PancakeSwap V2 BSC pools: ${database.pancakeSwapV2Pools().length}`);
   console.log(`PancakeSwap V3 BSC pools: ${database.pancakeSwapV3Pools().length}`);
   console.log(`Uniswap V3 BSC pools: ${database.uniswapV3Pools().length}`);
+  console.log(`Uniswap V4 BSC pools: ${database.uniswapV4Pools().length}`);
   console.log(`PancakeSwap Infinity CL BSC pools: ${database.pancakeSwapInfinityPools().length}`);
   console.table(database.pancakeSwapV2Pools().slice(0, 20));
   console.table(database.meteoraPools().map(({ address, poolType, tokenAMint, tokenASymbol, tokenADecimals, tokenBMint, tokenBSymbol, tokenBDecimals, tokenAVault, tokenBVault, tokenAAmount, tokenBAmount, poolMode, updatedSlot }) => ({ address, poolType, tokenAMint, tokenASymbol, tokenADecimals, tokenBMint, tokenBSymbol, tokenBDecimals, tokenAVault, tokenBVault, tokenAAmount, tokenBAmount, poolMode, updatedSlot })));

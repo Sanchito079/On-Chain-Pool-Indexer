@@ -11,6 +11,7 @@ import { PancakeSwapV2PoolRecord } from './evm/bsc/pancakeswap-v2-types.js';
 import { PancakeSwapV3PoolRecord } from './evm/bsc/pancakeswap-v3-types.js';
 import { PancakeSwapInfinityClPoolRecord } from './evm/bsc/pancakeswap-infinity-types.js';
 import { UniswapV3PoolRecord } from './evm/bsc/uniswap-v3-types.js';
+import { UniswapV4PoolRecord } from './evm/bsc/uniswap-v4-types.js';
 
 export class PostgresWriter {
   private readonly pool: Pool;
@@ -44,6 +45,8 @@ export class PostgresWriter {
   writePancakeSwapV3(pool: PancakeSwapV3PoolRecord): void { this.enqueue('bsc_pancakeswap_v3_pools', this.camelToSnake(pool)); }
   writePancakeSwapInfinity(pool: PancakeSwapInfinityClPoolRecord): void { this.enqueue('bsc_pancakeswap_infinity_cl_pools', this.camelToSnake(pool)); }
   writeUniswapV3(pool: UniswapV3PoolRecord): void { this.enqueue('bsc_uniswap_v3_pools', this.camelToSnake(pool)); }
+  writeUniswapV4(pool: UniswapV4PoolRecord): void { this.enqueue('bsc_uniswap_v4_pools', this.camelToSnake(pool)); }
+  writeUniswapV4Price(price: import('./evm/bsc/uniswap-v4-price.js').UniswapV4Price): void { this.enqueue('bsc_uniswap_v4_prices', { pool_id: price.poolId, pool_address: price.poolAddress, price: price.price, inverse_price: price.inversePrice, base_currency: price.baseCurrency, quote_currency: price.quoteCurrency, sqrt_price_x96: price.sqrtPriceX96.toString(), liquidity: price.liquidity.toString(), tick: price.tick, fee: price.fee, updated_block: price.updatedBlock, updated_at: price.updatedAt }, 'pool_id'); }
   writeUniswapV3Price(price: import('./evm/bsc/uniswap-v3-price.js').UniswapV3Price): void { this.enqueue('bsc_uniswap_v3_prices', { pool_address: price.poolAddress, price: price.price, inverse_price: price.inversePrice, base_token: price.baseToken, quote_token: price.quoteToken, sqrt_price_x96: price.sqrtPriceX96.toString(), liquidity: price.liquidity.toString(), tick: price.tick, updated_block: price.updatedBlock, updated_at: price.updatedAt }, 'pool_address'); }
   writePancakeSwapInfinityPrice(price: import('./evm/bsc/pancakeswap-infinity-price.js').PancakeSwapInfinityClPrice): void { this.enqueue('bsc_pancakeswap_infinity_cl_prices', { pool_id: price.poolId, pool_address: price.poolAddress, price: price.price, inverse_price: price.inversePrice, base_currency: price.baseCurrency, quote_currency: price.quoteCurrency, sqrt_price_x96: price.sqrtPriceX96.toString(), liquidity: price.liquidity.toString(), tick: price.tick, fee: price.fee, updated_block: price.updatedBlock, updated_at: price.updatedAt }, 'pool_id'); }
   writePancakeSwapV3Price(price: import('./evm/bsc/pancakeswap-v3-price.js').PancakeSwapV3Price): void {
