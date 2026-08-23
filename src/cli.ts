@@ -26,6 +26,7 @@ import { ORCA_WHIRLPOOL_PROGRAM_ID } from './orca-constants.js';
 import { OrcaIndexer } from './orca-indexer.js';
 import { OrcaPriceProcessor } from './orca-price.js';
 import { PancakeSwapV2Indexer } from './evm/bsc/pancakeswap-v2-indexer.js';
+import { PancakeSwapV3Indexer } from './evm/bsc/pancakeswap-v3-indexer.js';
 
 const rpcUrl = process.env.SOLANA_WS_RPC_URL ?? process.env.SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com';
 const transport = (process.env.INDEXER_TRANSPORT ?? 'grpc').toLowerCase();
@@ -70,7 +71,12 @@ try {
   await database.ready();
   const grpcEndpoint = process.env.SOLANA_GRPC_ENDPOINT;
   const grpcApiKey = process.env.TATUM_API_KEY;
-  if (transport === 'bsc-pancakeswap-v2' || transport === 'pancakeswap-v2') {
+  if (transport === 'bsc-pancakeswap-v3' || transport === 'pancakeswap-v3') {
+    const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
+    const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
+    console.log('Indexer transport: BSC PancakeSwap V3 only. Solana streams are disabled.');
+    await new PancakeSwapV3Indexer(database, bscHttpUrl, bscWsUrl).start();
+  } else if (transport === 'bsc-pancakeswap-v2' || transport === 'pancakeswap-v2') {
     const bscHttpUrl = process.env.BSC_HTTP_RPC_URL ?? 'https://bsc.blockrazor.xyz';
     const bscWsUrl = process.env.BSC_WS_RPC_URL ?? 'wss://bsc-rpc.publicnode.com';
     console.log('Indexer transport: BSC PancakeSwap V2 only. Solana streams are disabled.');

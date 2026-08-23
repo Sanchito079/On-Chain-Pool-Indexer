@@ -8,6 +8,7 @@ import { MeteoraDammV2PoolRecord } from './meteora-types.js';
 import { MeteoraDlmmPoolRecord } from './dlmm-types.js';
 import { OrcaWhirlpoolRecord } from './orca-types.js';
 import { PancakeSwapV2PoolRecord } from './evm/bsc/pancakeswap-v2-types.js';
+import { PancakeSwapV3PoolRecord } from './evm/bsc/pancakeswap-v3-types.js';
 
 export class PostgresWriter {
   private readonly pool: Pool;
@@ -38,6 +39,7 @@ export class PostgresWriter {
   writeDlmm(pool: MeteoraDlmmPoolRecord): void { this.enqueue('meteora_dlmm_pools', this.camelToSnake(pool)); }
   writeOrca(pool: OrcaWhirlpoolRecord): void { this.enqueue('orca_whirlpools', this.camelToSnake(pool)); }
   writePancakeSwapV2(pool: PancakeSwapV2PoolRecord): void { this.enqueue('bsc_pancakeswap_v2_pools', this.camelToSnake(pool)); }
+  writePancakeSwapV3(pool: PancakeSwapV3PoolRecord): void { this.enqueue('bsc_pancakeswap_v3_pools', this.camelToSnake(pool)); }
   writePancakeSwapV2Price(price: import('./evm/bsc/pancakeswap-v2-price.js').PancakeSwapV2Price): void {
     this.enqueue('bsc_pancakeswap_v2_prices', {
       pool_address: price.poolAddress, reserve0: price.reserve0.toString(), reserve1: price.reserve1.toString(),

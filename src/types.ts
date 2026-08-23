@@ -1,4 +1,4 @@
-export type PoolType = 'pumpswap_amm' | 'raydium_clmm' | 'meteora_damm_v2' | 'meteora_dlmm' | 'orca_whirlpool' | 'pancakeswap_v2';
+export type PoolType = 'pumpswap_amm' | 'raydium_clmm' | 'meteora_damm_v2' | 'meteora_dlmm' | 'orca_whirlpool' | 'pancakeswap_v2' | 'pancakeswap_v3';
 
 export type PoolRecord = {
   address: string;

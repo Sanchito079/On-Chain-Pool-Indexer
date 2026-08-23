@@ -37,6 +37,8 @@ Set `TATUM_STREAMS=raydium`, `pumpswap`, `meteora`, `dlmm`, or `both` to run onl
 
 PancakeSwap V2 BSC pool discovery uses the factory `PairCreated` event and pair pricing uses `Sync` reserve events. Configure `BSC_WS_RPC_URL`, `BSC_HTTP_RPC_URL`, and set `BSC_PANCAKESWAP_V2=false` to disable it. Discovered pairs are stored in `bsc_pancakeswap_v2_pools` and prices in `bsc_pancakeswap_v2_prices`.
 
+Set `INDEXER_TRANSPORT=bsc-pancakeswap-v3` to run only PancakeSwap V3 BSC pool discovery. It uses the official V3 factory `0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865` and stores pools in `bsc_pancakeswap_v3_pools`. V3 pricing will be implemented separately.
+
 ## Deploy to Fly.io
 
 The included `fly.toml` deploys one always-on machine with a persistent volume mounted at `/app/data`. This is the correct shape for a short live monitoring trial with SQLite. Create the app and volume once, using a globally unique app name if `on-chain-pool-indexer` is already taken:
