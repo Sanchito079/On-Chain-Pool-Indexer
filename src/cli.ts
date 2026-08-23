@@ -66,6 +66,7 @@ function handlePrice(price: import('./price-fetcher/types.js').PoolPrice): void 
 }
 
 try {
+  await database.ready();
   const grpcEndpoint = process.env.SOLANA_GRPC_ENDPOINT;
   const grpcApiKey = process.env.TATUM_API_KEY;
   if (transport === 'grpc' && grpcEndpoint && grpcApiKey) {
